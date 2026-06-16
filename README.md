@@ -6,7 +6,8 @@ Terraform module to manage AWS IAM Identity Center (SSO): users, groups, permiss
 
 ```hcl
 module "identity_center" {
-  source = "git::https://github.com/<your-org>/terraform-aws-iam-identity-center.git?ref=v1.0.0"
+  source  = "khimnguynnn/iam-identity-center/aws"
+  version = "~> 1.0"
 
   users = {
     "alice@example.com" = {
