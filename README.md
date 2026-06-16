@@ -28,6 +28,21 @@ module "identity_center" {
       session_duration = "PT8H"
       managed_policies = ["arn:aws:iam::aws:policy/AdministratorAccess"]
     }
+
+    "DEV_S3BucketOnly" = {
+      description      = "S3 access limited to a specific bucket"
+      session_duration = "PT8H"
+      inline_policy    = jsonencode({
+        Version = "2012-10-17"
+        Statement = [
+          {
+            Effect   = "Allow"
+            Action   = ["s3:ListBucket", "s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+            Resource = ["arn:aws:s3:::my-bucket", "arn:aws:s3:::my-bucket/*"]
+          }
+        ]
+      })
+    }
   }
 
   accounts = {
@@ -41,11 +56,43 @@ module "identity_center" {
   }
 
   assignments = [
+    # Assign to all accounts
     {
       group          = "SRE"
       permission_set = "SRE_AdministratorAccess"
       all_accounts   = true
-    }
+    },
+
+    # Assign to specific accounts only
+    {
+      group          = "DEV"
+      permission_set = "DEV_S3BucketOnly"
+      accounts       = ["staging"]
+    },
+
+    # Assign via account_group (named set of accounts)
+    {
+      group          = "Auditors"
+      permission_set = "ReadOnlyAccess"
+      account_groups = ["non_prod"]
+    },
+
+    # All accounts but exclude production
+    {
+      group            = "QA"
+      permission_set   = "ReadOnlyAccess"
+      all_accounts     = true
+      exclude_accounts = ["production"]
+    },
+
+    # Mix: specific accounts + account_group, exclude one
+    {
+      group            = "Contractors"
+      permission_set   = "ReadOnlyAccess"
+      accounts         = ["management"]
+      account_groups   = ["non_prod"]
+      exclude_accounts = ["staging"]
+    },
   ]
 }
 ```
